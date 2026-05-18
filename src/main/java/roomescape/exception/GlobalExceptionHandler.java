@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -28,7 +27,7 @@ public class GlobalExceptionHandler {
                 .stream()
                 .findFirst()
                 .map(FieldError::getDefaultMessage)
-                .orElse("요청 값이 올바르지 않습니다.");
+                .orElse(ErrorCode.INVALID_INPUT.getMessage());
         return invalidInput(detail);
     }
 
@@ -38,7 +37,7 @@ public class GlobalExceptionHandler {
                 .stream()
                 .findFirst()
                 .map(ConstraintViolation::getMessage)
-                .orElse("요청 값이 올바르지 않습니다.");
+                .orElse(ErrorCode.INVALID_INPUT.getMessage());
         return invalidInput(detail);
     }
 
@@ -59,13 +58,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoResourceFoundException.class)
     public Object handleNoResource(HttpServletRequest request) {
+        ErrorCode errorCode = ErrorCode.NOT_FOUND;
+
         if (isHtmlRequest(request)) {
             ModelAndView modelAndView = new ModelAndView("error/404");
-            modelAndView.setStatus(HttpStatus.NOT_FOUND);
+            modelAndView.setStatus(errorCode.getStatus());
             return modelAndView;
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErrorResponse(ErrorCode.NOT_FOUND.name(), "존재하지 않는 리소스입니다."));
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ErrorResponse.from(errorCode));
     }
 
     @ExceptionHandler(RoomescapeException.class)
@@ -76,13 +77,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException() {
-        return ResponseEntity.internalServerError()
-                .body(new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR.name(), "서버에 문제가 발생했습니다."));
+        ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
+
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ErrorResponse.from(errorCode));
     }
 
     private ResponseEntity<ErrorResponse> invalidInput(String detail) {
-        return ResponseEntity.badRequest()
-                .body(new ErrorResponse(ErrorCode.INVALID_INPUT.name(), detail));
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT;
+
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ErrorResponse.from(errorCode, detail));
     }
 
     private boolean isHtmlRequest(HttpServletRequest request) {
