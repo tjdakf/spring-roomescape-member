@@ -71,7 +71,7 @@ class ThemeRequestTest {
 
         // then
         assertThat(result).extracting(ConstraintViolation::getMessage)
-                .containsExactly("thumbnail는 255자를 넘을 수 없습니다.");
+                .containsExactly("thumbnail은 255자를 넘을 수 없습니다.");
     }
 
     @ParameterizedTest

@@ -9,7 +9,7 @@ public record ThemeRequest(
         String name,
         @Size(max = 255, message = "description은 255자를 넘을 수 없습니다.")
         String description,
-        @Size(max = 255, message = "thumbnail는 255자를 넘을 수 없습니다.")
+        @Size(max = 255, message = "thumbnail은 255자를 넘을 수 없습니다.")
         String thumbnail
 ) {
 }
